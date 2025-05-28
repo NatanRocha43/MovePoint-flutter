@@ -3,7 +3,6 @@ import 'package:flutter/services.dart';
 
 import 'cadastro_complementar_screen.dart';
 
-// Aqui a tela de cadastro parte 1
 class CadastroParte1Screen extends StatefulWidget {
   const CadastroParte1Screen({super.key});
 
@@ -71,10 +70,13 @@ class _CadastroParte1ScreenState extends State<CadastroParte1Screen> {
                   const SizedBox(height: 20),
 
                   Center(
-                    child: Image.asset(
-                      'assets/logo.png',
-                      width: 243,
-                      height: 78,
+                    child: Semantics(
+                      label: 'Logo do aplicativo',
+                      child: Image.asset(
+                        'assets/logo.png',
+                        width: 243,
+                        height: 78,
+                      ),
                     ),
                   ),
 
@@ -98,6 +100,8 @@ class _CadastroParte1ScreenState extends State<CadastroParte1Screen> {
                     label: 'E-mail',
                     controller: _emailController,
                     keyboardType: TextInputType.emailAddress,
+                    autocorrect: false,
+                    textCapitalization: TextCapitalization.none,
                     validator: (value) {
                       if (value == null || value.trim().isEmpty) {
                         return 'Por favor, insira seu e-mail';
@@ -143,7 +147,6 @@ class _CadastroParte1ScreenState extends State<CadastroParte1Screen> {
                   ),
                   const SizedBox(height: 16),
 
-                  // Aqui: Endereço e Número lado a lado
                   Row(
                     children: [
                       Expanded(
@@ -180,7 +183,6 @@ class _CadastroParte1ScreenState extends State<CadastroParte1Screen> {
 
                   const SizedBox(height: 16),
 
-                  // Cidade e UF lado a lado
                   Row(
                     children: [
                       Expanded(
@@ -202,9 +204,17 @@ class _CadastroParte1ScreenState extends State<CadastroParte1Screen> {
                         child: _buildLabeledField(
                           label: 'UF',
                           controller: _ufController,
+                          inputFormatters: [
+                            LengthLimitingTextInputFormatter(2),
+                            FilteringTextInputFormatter.allow(RegExp(r'[A-Za-z]')),
+                          ],
+                          textCapitalization: TextCapitalization.characters,
                           validator: (value) {
                             if (value == null || value.trim().isEmpty) {
                               return 'Por favor, insira o estado';
+                            }
+                            if (value.trim().length != 2) {
+                              return 'UF deve conter 2 letras';
                             }
                             return null;
                           },
@@ -241,14 +251,17 @@ class _CadastroParte1ScreenState extends State<CadastroParte1Screen> {
                   const SizedBox(height: 12),
 
                   Center(
-                    child: GestureDetector(
-                      onTap: () => Navigator.pop(context),
-                      child: const Text(
-                        'Já possui uma conta? Faça o login aqui.',
-                        style: TextStyle(
-                          color: Color(0xFF378274),
-                          fontWeight: FontWeight.bold,
-                          decoration: TextDecoration.underline,
+                    child: MouseRegion(
+                      cursor: SystemMouseCursors.click,
+                      child: GestureDetector(
+                        onTap: () => Navigator.pop(context),
+                        child: const Text(
+                          'Já possui uma conta? Faça o login aqui.',
+                          style: TextStyle(
+                            color: Color(0xFF378274),
+                            fontWeight: FontWeight.bold,
+                            decoration: TextDecoration.underline,
+                          ),
                         ),
                       ),
                     ),
@@ -270,6 +283,8 @@ class _CadastroParte1ScreenState extends State<CadastroParte1Screen> {
     TextInputType? keyboardType,
     bool obscureText = false,
     List<TextInputFormatter>? inputFormatters,
+    TextCapitalization textCapitalization = TextCapitalization.none,
+    bool autocorrect = true,
     String? Function(String?)? validator,
   }) {
     return Column(
@@ -296,6 +311,8 @@ class _CadastroParte1ScreenState extends State<CadastroParte1Screen> {
             keyboardType: keyboardType,
             obscureText: obscureText,
             inputFormatters: inputFormatters,
+            textCapitalization: textCapitalization,
+            autocorrect: autocorrect,
             validator: validator,
             decoration: const InputDecoration(
               border: InputBorder.none,

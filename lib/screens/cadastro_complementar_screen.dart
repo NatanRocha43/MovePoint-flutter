@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-
 import 'login_screen.dart';
 
 class CadastroComplementarScreen extends StatefulWidget {
@@ -48,20 +47,16 @@ class _CadastroComplementarScreenState
     if (_formKey.currentState!.validate()) {
       showDialog(
         context: context,
-        builder:
-            (context) => AlertDialog(
-              title: const Text('Cadastro concluído'),
-              content: const Text('Seu cadastro foi finalizado com sucesso!'),
-              actions: [
-                TextButton(
-                  onPressed:
-                      () => Navigator.of(
-                        context,
-                      ).popUntil((route) => route.isFirst),
-                  child: const Text('OK'),
-                ),
-              ],
+        builder: (context) => AlertDialog(
+          title: const Text('Cadastro concluído'),
+          content: const Text('Seu cadastro foi finalizado com sucesso!'),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).popUntil((route) => route.isFirst),
+              child: const Text('OK'),
             ),
+          ],
+        ),
       );
     }
   }
@@ -73,8 +68,8 @@ class _CadastroComplementarScreenState
       body: Center(
         child: SingleChildScrollView(
           child: Container(
-            padding: const EdgeInsets.symmetric(horizontal: 22),
-            constraints: const BoxConstraints(maxWidth: 400),
+            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 32),
+            constraints: const BoxConstraints(maxWidth: 420),
             child: Form(
               key: _formKey,
               child: Column(
@@ -82,30 +77,23 @@ class _CadastroComplementarScreenState
                 crossAxisAlignment: CrossAxisAlignment.start,
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  const SizedBox(height: 20),
-
-                  // Logo
                   Center(
                     child: Image.asset(
                       'assets/logo.png',
-                      width: 243,
-                      height: 78,
+                      width: 220,
+                      height: 70,
+                      fit: BoxFit.contain,
                     ),
                   ),
+                  const SizedBox(height: 32),
 
-                  const SizedBox(height: 30),
-
-                  // Campo PCD (Sim/Não)
+                  // Campo PCD
                   _buildDropdownField(
                     label: 'Especificação de PCD',
-                    value:
-                        _pcdController.text.isEmpty
-                            ? null
-                            : _pcdController.text,
+                    value: _pcdController.text.isEmpty ? null : _pcdController.text,
                     items: const ['Sim', 'Não'],
-                    onChanged: (val) => _pcdController.text = val ?? '',
-                    validator:
-                        (val) => val == null ? 'Selecione se é PCD' : null,
+                    onChanged: (val) => setState(() => _pcdController.text = val ?? ''),
+                    validator: (val) => val == null ? 'Selecione se é PCD' : null,
                   ),
                   const SizedBox(height: 20),
 
@@ -115,8 +103,7 @@ class _CadastroComplementarScreenState
                     value: _genero,
                     items: const ['Masculino', 'Feminino', 'Outro'],
                     onChanged: (val) => setState(() => _genero = val),
-                    validator:
-                        (val) => val == null ? 'Selecione o gênero' : null,
+                    validator: (val) => val == null ? 'Selecione o gênero' : null,
                   ),
                   const SizedBox(height: 20),
 
@@ -127,26 +114,26 @@ class _CadastroComplementarScreenState
                     validator: (val) {
                       if (val == null || val.isEmpty) return 'Informe a idade';
                       final idade = int.tryParse(val);
-                      if (idade == null || idade <= 0)
-                        return 'Informe uma idade válida';
+                      if (idade == null || idade <= 0) return 'Informe uma idade válida';
                       return null;
                     },
                   ),
                   const SizedBox(height: 20),
 
-                  // Campo Esporte de Interesse
+                  // Campo Esporte
                   _buildTextField(
                     label: 'Esporte de Interesse',
                     controller: _esporteController,
                     validator: (val) {
-                      if (val == null || val.trim().isEmpty)
+                      if (val == null || val.trim().isEmpty) {
                         return 'Informe o esporte de interesse';
+                      }
                       return null;
                     },
                   ),
-                  const SizedBox(height: 40),
+                  const SizedBox(height: 32),
 
-                  // Botão Finalizar Cadastro
+                  // Botão de cadastro
                   SizedBox(
                     width: double.infinity,
                     height: 50,
@@ -155,44 +142,42 @@ class _CadastroComplementarScreenState
                       style: ElevatedButton.styleFrom(
                         backgroundColor: const Color(0xFF378274),
                         shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(20),
+                          borderRadius: BorderRadius.circular(16),
                         ),
-                        elevation: 0,
+                        elevation: 2,
                       ),
                       child: const Text(
                         'Cadastrar',
                         style: TextStyle(
-                          color: Colors.white,
                           fontSize: 18,
                           fontWeight: FontWeight.bold,
+                          color: Colors.white,
                         ),
                       ),
                     ),
                   ),
+                  const SizedBox(height: 16),
 
-                  const SizedBox(height: 12),
+                  // Link de login
                   Center(
                     child: GestureDetector(
                       onTap: () {
                         Navigator.pushAndRemoveUntil(
                           context,
-                          MaterialPageRoute(
-                            builder: (context) => const LoginScreen(),
-                          ),
-                          (Route<dynamic> route) => false,
+                          MaterialPageRoute(builder: (context) => const LoginScreen()),
+                          (route) => false,
                         );
                       },
                       child: const Text(
                         'Já possui uma conta? Faça o login aqui.',
                         style: TextStyle(
                           color: Color(0xFF378274),
-                          fontWeight: FontWeight.bold,
+                          fontWeight: FontWeight.w600,
                           decoration: TextDecoration.underline,
                         ),
                       ),
                     ),
                   ),
-                  const SizedBox(height: 30),
                 ],
               ),
             ),
@@ -227,10 +212,9 @@ class _CadastroComplementarScreenState
           ),
           child: DropdownButtonFormField<String>(
             value: value,
-            items:
-                items
-                    .map((e) => DropdownMenuItem(value: e, child: Text(e)))
-                    .toList(),
+            items: items
+                .map((e) => DropdownMenuItem(value: e, child: Text(e)))
+                .toList(),
             onChanged: onChanged,
             decoration: const InputDecoration(
               border: InputBorder.none,
