@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "537021299938",
+    "project_id": "flutter-ifsp",
+    "storage_bucket": "flutter-ifsp.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:537021299938:android:4b39785804be859198b2bb",
+        "android_client_info": {
+          "package_name": "com.example.nome_do_projeto"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDtV-CqXnPplep3rBa4Ns-3cNk7iX1JUug"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

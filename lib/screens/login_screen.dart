@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
-import 'cadastro_basico_screen.dart'; // ajuste o caminho conforme seu projeto
+import 'package:firebase_auth/firebase_auth.dart';
+import 'cadastro_basico_screen.dart'; // ajuste conforme necessário
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -29,13 +30,48 @@ class _LoginScreenState extends State<LoginScreen> {
     );
   }
 
-  void _fazerLogin() {
+  void _fazerLogin() async {
     if (_formKey.currentState!.validate()) {
-      // Aqui você pode colocar a lógica de autenticação
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Login realizado com sucesso!')),
-      );
+      try {
+        UserCredential userCredential = await FirebaseAuth.instance
+            .signInWithEmailAndPassword(
+          email: _emailController.text.trim(),
+          password: _senhaController.text.trim(),
+        );
+
+        _mostrarDialogo('Sucesso', 'Login realizado com sucesso!');
+      } on FirebaseAuthException catch (e) {
+        String mensagemErro = 'Erro ao fazer login.';
+        if (e.code == 'user-not-found') {
+          mensagemErro = 'Usuário não encontrado.';
+        } else if (e.code == 'wrong-password') {
+          mensagemErro = 'Senha incorreta.';
+        }
+        _mostrarDialogo('Erro', mensagemErro);
+      } catch (e) {
+        _mostrarDialogo('Erro', 'Ocorreu um erro inesperado.');
+      }
     }
+  }
+
+  void _mostrarDialogo(String titulo, String mensagem) {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: Text(titulo),
+          content: Text(mensagem),
+          actions: <Widget>[
+            TextButton(
+              child: const Text("OK"),
+              onPressed: () {
+                Navigator.of(context).pop();
+              },
+            ),
+          ],
+        );
+      },
+    );
   }
 
   @override

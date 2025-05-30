@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+
 import 'login_screen.dart';
 
 class CadastroComplementarScreen extends StatefulWidget {
@@ -27,37 +30,87 @@ class CadastroComplementarScreen extends StatefulWidget {
       _CadastroComplementarScreenState();
 }
 
-class _CadastroComplementarScreenState
-    extends State<CadastroComplementarScreen> {
+class _CadastroComplementarScreenState extends State<CadastroComplementarScreen> {
   final _formKey = GlobalKey<FormState>();
-  final TextEditingController _pcdController = TextEditingController();
+
+  String? _pcd;
   String? _genero;
   final TextEditingController _idadeController = TextEditingController();
   final TextEditingController _esporteController = TextEditingController();
 
+  bool _isLoading = false;
+
   @override
   void dispose() {
-    _pcdController.dispose();
     _idadeController.dispose();
     _esporteController.dispose();
     super.dispose();
   }
 
-  void _finalizarCadastro() {
-    if (_formKey.currentState!.validate()) {
-      showDialog(
-        context: context,
-        builder: (context) => AlertDialog(
-          title: const Text('Cadastro concluído'),
-          content: const Text('Seu cadastro foi finalizado com sucesso!'),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.of(context).popUntil((route) => route.isFirst),
-              child: const Text('OK'),
-            ),
-          ],
-        ),
+  Future<UserCredential> _criarUsuarioFirebase() async {
+    return await FirebaseAuth.instance.createUserWithEmailAndPassword(
+      email: widget.email,
+      password: widget.senha,
+    );
+  }
+
+  Future<void> _salvarDadosFirestore(String uid) async {
+    await FirebaseFirestore.instance.collection('usuarios').doc(uid).set({
+      'email': widget.email,
+      'cep': widget.cep,
+      'endereco': widget.endereco,
+      'numero': widget.numero,
+      'cidade': widget.cidade,
+      'uf': widget.uf,
+      'pcd': _pcd,
+      'genero': _genero,
+      'idade': int.tryParse(_idadeController.text) ?? 0,
+      'esporte': _esporteController.text,
+      'criado_em': FieldValue.serverTimestamp(),
+    });
+  }
+
+  void _mostrarConfirmacao() {
+    if (!mounted) return;
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Cadastro concluído'),
+        content: const Text('Seu cadastro foi finalizado com sucesso!'),
+        actions: [
+          TextButton(
+            onPressed: () =>
+                Navigator.of(context).popUntil((route) => route.isFirst),
+            child: const Text('OK'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Future<void> _finalizarCadastro() async {
+    if (!_formKey.currentState!.validate()) return;
+
+    setState(() => _isLoading = true);
+
+    try {
+      final userCredential = await _criarUsuarioFirebase();
+      await _salvarDadosFirestore(userCredential.user!.uid);
+      _mostrarConfirmacao();
+    } on FirebaseAuthException catch (e) {
+      String msg = 'Erro ao cadastrar usuário';
+      if (e.code == 'email-already-in-use') {
+        msg = 'Este e-mail já está em uso.';
+      }
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(msg)),
       );
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Erro inesperado: $e')),
+      );
+    } finally {
+      setState(() => _isLoading = false);
     }
   }
 
@@ -73,8 +126,6 @@ class _CadastroComplementarScreenState
             child: Form(
               key: _formKey,
               child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                crossAxisAlignment: CrossAxisAlignment.start,
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   Center(
@@ -87,17 +138,15 @@ class _CadastroComplementarScreenState
                   ),
                   const SizedBox(height: 32),
 
-                  // Campo PCD
                   _buildDropdownField(
                     label: 'Especificação de PCD',
-                    value: _pcdController.text.isEmpty ? null : _pcdController.text,
+                    value: _pcd,
                     items: const ['Sim', 'Não'],
-                    onChanged: (val) => setState(() => _pcdController.text = val ?? ''),
+                    onChanged: (val) => setState(() => _pcd = val),
                     validator: (val) => val == null ? 'Selecione se é PCD' : null,
                   ),
                   const SizedBox(height: 20),
 
-                  // Campo Gênero
                   _buildDropdownField(
                     label: 'Gênero',
                     value: _genero,
@@ -107,7 +156,6 @@ class _CadastroComplementarScreenState
                   ),
                   const SizedBox(height: 20),
 
-                  // Campo Idade
                   _buildNumberField(
                     label: 'Idade',
                     controller: _idadeController,
@@ -120,7 +168,6 @@ class _CadastroComplementarScreenState
                   ),
                   const SizedBox(height: 20),
 
-                  // Campo Esporte
                   _buildTextField(
                     label: 'Esporte de Interesse',
                     controller: _esporteController,
@@ -133,12 +180,11 @@ class _CadastroComplementarScreenState
                   ),
                   const SizedBox(height: 32),
 
-                  // Botão de cadastro
                   SizedBox(
                     width: double.infinity,
                     height: 50,
                     child: ElevatedButton(
-                      onPressed: _finalizarCadastro,
+                      onPressed: _isLoading ? null : _finalizarCadastro,
                       style: ElevatedButton.styleFrom(
                         backgroundColor: const Color(0xFF378274),
                         shape: RoundedRectangleBorder(
@@ -146,19 +192,20 @@ class _CadastroComplementarScreenState
                         ),
                         elevation: 2,
                       ),
-                      child: const Text(
-                        'Cadastrar',
-                        style: TextStyle(
-                          fontSize: 18,
-                          fontWeight: FontWeight.bold,
-                          color: Colors.white,
-                        ),
-                      ),
+                      child: _isLoading
+                          ? const CircularProgressIndicator(color: Colors.white)
+                          : const Text(
+                              'Cadastrar',
+                              style: TextStyle(
+                                fontSize: 18,
+                                fontWeight: FontWeight.bold,
+                                color: Colors.white,
+                              ),
+                            ),
                     ),
                   ),
                   const SizedBox(height: 16),
 
-                  // Link de login
                   Center(
                     child: GestureDetector(
                       onTap: () {
@@ -197,13 +244,7 @@ class _CadastroComplementarScreenState
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Padding(
-          padding: const EdgeInsets.only(left: 8.0, bottom: 4),
-          child: Text(
-            label,
-            style: const TextStyle(color: Colors.black, fontSize: 16),
-          ),
-        ),
+        Text(label, style: const TextStyle(color: Colors.black, fontSize: 16)),
         Container(
           height: 45,
           decoration: BoxDecoration(
@@ -216,6 +257,7 @@ class _CadastroComplementarScreenState
                 .map((e) => DropdownMenuItem(value: e, child: Text(e)))
                 .toList(),
             onChanged: onChanged,
+            icon: const Icon(Icons.arrow_drop_down, color: Colors.black54),
             decoration: const InputDecoration(
               border: InputBorder.none,
               contentPadding: EdgeInsets.symmetric(horizontal: 16),
@@ -236,13 +278,7 @@ class _CadastroComplementarScreenState
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Padding(
-          padding: const EdgeInsets.only(left: 8.0, bottom: 4),
-          child: Text(
-            label,
-            style: const TextStyle(color: Colors.black, fontSize: 16),
-          ),
-        ),
+        Text(label, style: const TextStyle(color: Colors.black, fontSize: 16)),
         Container(
           height: 45,
           decoration: BoxDecoration(
@@ -256,10 +292,7 @@ class _CadastroComplementarScreenState
             validator: validator,
             decoration: const InputDecoration(
               border: InputBorder.none,
-              contentPadding: EdgeInsets.symmetric(
-                vertical: 12,
-                horizontal: 18,
-              ),
+              contentPadding: EdgeInsets.symmetric(horizontal: 18),
             ),
             style: const TextStyle(color: Colors.black54),
           ),
@@ -276,13 +309,7 @@ class _CadastroComplementarScreenState
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Padding(
-          padding: const EdgeInsets.only(left: 8.0, bottom: 4),
-          child: Text(
-            label,
-            style: const TextStyle(color: Colors.black, fontSize: 16),
-          ),
-        ),
+        Text(label, style: const TextStyle(color: Colors.black, fontSize: 16)),
         Container(
           height: 45,
           decoration: BoxDecoration(
@@ -294,10 +321,7 @@ class _CadastroComplementarScreenState
             validator: validator,
             decoration: const InputDecoration(
               border: InputBorder.none,
-              contentPadding: EdgeInsets.symmetric(
-                vertical: 12,
-                horizontal: 18,
-              ),
+              contentPadding: EdgeInsets.symmetric(horizontal: 18),
             ),
             style: const TextStyle(color: Colors.black54),
           ),
