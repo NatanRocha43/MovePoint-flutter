@@ -12,6 +12,7 @@ class CadastroParte1Screen extends StatefulWidget {
 
 class _CadastroParte1ScreenState extends State<CadastroParte1Screen> {
   final _formKey = GlobalKey<FormState>();
+  final TextEditingController _nomeController = TextEditingController();
   final TextEditingController _emailController = TextEditingController();
   final TextEditingController _senhaController = TextEditingController();
   final TextEditingController _cepController = TextEditingController();
@@ -25,15 +26,17 @@ class _CadastroParte1ScreenState extends State<CadastroParte1Screen> {
       Navigator.push(
         context,
         MaterialPageRoute(
-          builder: (context) => CadastroComplementarScreen(
-            email: _emailController.text.trim(),
-            senha: _senhaController.text.trim(),
-            cep: _cepController.text.trim(),
-            endereco: _enderecoController.text.trim(),
-            numero: _numeroController.text.trim(),
-            cidade: _cidadeController.text.trim(),
-            uf: _ufController.text.trim(),
-          ),
+          builder:
+              (context) => CadastroComplementarScreen(
+                nome: _nomeController.text.trim(),
+                email: _emailController.text.trim(),
+                senha: _senhaController.text.trim(),
+                cep: _cepController.text.trim(),
+                endereco: _enderecoController.text.trim(),
+                numero: _numeroController.text.trim(),
+                cidade: _cidadeController.text.trim(),
+                uf: _ufController.text.trim(),
+              ),
         ),
       );
     }
@@ -41,6 +44,7 @@ class _CadastroParte1ScreenState extends State<CadastroParte1Screen> {
 
   @override
   void dispose() {
+    _nomeController.dispose();
     _emailController.dispose();
     _senhaController.dispose();
     _cepController.dispose();
@@ -97,6 +101,20 @@ class _CadastroParte1ScreenState extends State<CadastroParte1Screen> {
                   const SizedBox(height: 20),
 
                   _buildLabeledField(
+                    label: 'Nome',
+                    controller: _nomeController,
+                    autocorrect: false,
+                    textCapitalization: TextCapitalization.words,
+                    validator: (value) {
+                      if (value == null || value.trim().isEmpty) {
+                        return 'Por favor, insira seu nome';
+                      }
+                      return null;
+                    },
+                  ),
+                  const SizedBox(height: 16),
+
+                  _buildLabeledField(
                     label: 'E-mail',
                     controller: _emailController,
                     keyboardType: TextInputType.emailAddress,
@@ -106,7 +124,9 @@ class _CadastroParte1ScreenState extends State<CadastroParte1Screen> {
                       if (value == null || value.trim().isEmpty) {
                         return 'Por favor, insira seu e-mail';
                       }
-                      if (!RegExp(r'^[^@]+@[^@]+\.[^@]+').hasMatch(value.trim())) {
+                      if (!RegExp(
+                        r'^[^@]+@[^@]+\.[^@]+',
+                      ).hasMatch(value.trim())) {
                         return 'Por favor, insira um e-mail válido';
                       }
                       return null;
@@ -169,7 +189,9 @@ class _CadastroParte1ScreenState extends State<CadastroParte1Screen> {
                           label: 'Número',
                           controller: _numeroController,
                           keyboardType: TextInputType.number,
-                          inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+                          inputFormatters: [
+                            FilteringTextInputFormatter.digitsOnly,
+                          ],
                           validator: (value) {
                             if (value == null || value.isEmpty) {
                               return 'Por favor, insira o número';
@@ -206,7 +228,9 @@ class _CadastroParte1ScreenState extends State<CadastroParte1Screen> {
                           controller: _ufController,
                           inputFormatters: [
                             LengthLimitingTextInputFormatter(2),
-                            FilteringTextInputFormatter.allow(RegExp(r'[A-Za-z]')),
+                            FilteringTextInputFormatter.allow(
+                              RegExp(r'[A-Za-z]'),
+                            ),
                           ],
                           textCapitalization: TextCapitalization.characters,
                           validator: (value) {
@@ -294,10 +318,7 @@ class _CadastroParte1ScreenState extends State<CadastroParte1Screen> {
           padding: const EdgeInsets.only(left: 8.0, bottom: 4),
           child: Text(
             label,
-            style: const TextStyle(
-              color: Colors.black,
-              fontSize: 16,
-            ),
+            style: const TextStyle(color: Colors.black, fontSize: 16),
           ),
         ),
         Container(
