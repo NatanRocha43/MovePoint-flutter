@@ -2,10 +2,12 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:nome_do_projeto/sports/index.dart';
 
 import 'login_screen.dart';
 
 class CadastroComplementarScreen extends StatefulWidget {
+  final String nome;
   final String email;
   final String senha;
   final String cep;
@@ -16,6 +18,7 @@ class CadastroComplementarScreen extends StatefulWidget {
 
   const CadastroComplementarScreen({
     super.key,
+    required this.nome,
     required this.email,
     required this.senha,
     required this.cep,
@@ -30,20 +33,20 @@ class CadastroComplementarScreen extends StatefulWidget {
       _CadastroComplementarScreenState();
 }
 
-class _CadastroComplementarScreenState extends State<CadastroComplementarScreen> {
+class _CadastroComplementarScreenState
+    extends State<CadastroComplementarScreen> {
   final _formKey = GlobalKey<FormState>();
 
   String? _pcd;
   String? _genero;
+  String? _esporte;
   final TextEditingController _idadeController = TextEditingController();
-  final TextEditingController _esporteController = TextEditingController();
 
   bool _isLoading = false;
 
   @override
   void dispose() {
     _idadeController.dispose();
-    _esporteController.dispose();
     super.dispose();
   }
 
@@ -56,6 +59,7 @@ class _CadastroComplementarScreenState extends State<CadastroComplementarScreen>
 
   Future<void> _salvarDadosFirestore(String uid) async {
     await FirebaseFirestore.instance.collection('usuarios').doc(uid).set({
+      'nome': widget.nome,
       'email': widget.email,
       'cep': widget.cep,
       'endereco': widget.endereco,
@@ -65,7 +69,7 @@ class _CadastroComplementarScreenState extends State<CadastroComplementarScreen>
       'pcd': _pcd,
       'genero': _genero,
       'idade': int.tryParse(_idadeController.text) ?? 0,
-      'esporte': _esporteController.text,
+      'esporte': _esporte,
       'criado_em': FieldValue.serverTimestamp(),
     });
   }
@@ -74,17 +78,20 @@ class _CadastroComplementarScreenState extends State<CadastroComplementarScreen>
     if (!mounted) return;
     showDialog(
       context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Cadastro concluído'),
-        content: const Text('Seu cadastro foi finalizado com sucesso!'),
-        actions: [
-          TextButton(
-            onPressed: () =>
-                Navigator.of(context).popUntil((route) => route.isFirst),
-            child: const Text('OK'),
+      builder:
+          (context) => AlertDialog(
+            title: const Text('Cadastro concluído'),
+            content: const Text('Seu cadastro foi finalizado com sucesso!'),
+            actions: [
+              TextButton(
+                onPressed:
+                    () => Navigator.of(
+                      context,
+                    ).popUntil((route) => route.isFirst),
+                child: const Text('OK'),
+              ),
+            ],
           ),
-        ],
-      ),
     );
   }
 
@@ -102,13 +109,11 @@ class _CadastroComplementarScreenState extends State<CadastroComplementarScreen>
       if (e.code == 'email-already-in-use') {
         msg = 'Este e-mail já está em uso.';
       }
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(msg)),
-      );
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(msg)));
     } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Erro inesperado: $e')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('Erro inesperado: $e')));
     } finally {
       setState(() => _isLoading = false);
     }
@@ -143,7 +148,8 @@ class _CadastroComplementarScreenState extends State<CadastroComplementarScreen>
                     value: _pcd,
                     items: const ['Sim', 'Não'],
                     onChanged: (val) => setState(() => _pcd = val),
-                    validator: (val) => val == null ? 'Selecione se é PCD' : null,
+                    validator:
+                        (val) => val == null ? 'Selecione se é PCD' : null,
                   ),
                   const SizedBox(height: 20),
 
@@ -152,7 +158,8 @@ class _CadastroComplementarScreenState extends State<CadastroComplementarScreen>
                     value: _genero,
                     items: const ['Masculino', 'Feminino', 'Outro'],
                     onChanged: (val) => setState(() => _genero = val),
-                    validator: (val) => val == null ? 'Selecione o gênero' : null,
+                    validator:
+                        (val) => val == null ? 'Selecione o gênero' : null,
                   ),
                   const SizedBox(height: 20),
 
@@ -162,21 +169,23 @@ class _CadastroComplementarScreenState extends State<CadastroComplementarScreen>
                     validator: (val) {
                       if (val == null || val.isEmpty) return 'Informe a idade';
                       final idade = int.tryParse(val);
-                      if (idade == null || idade <= 0) return 'Informe uma idade válida';
+                      if (idade == null || idade <= 0)
+                        return 'Informe uma idade válida';
                       return null;
                     },
                   ),
                   const SizedBox(height: 20),
 
-                  _buildTextField(
+                  _buildDropdownField(
                     label: 'Esporte de Interesse',
-                    controller: _esporteController,
-                    validator: (val) {
-                      if (val == null || val.trim().isEmpty) {
-                        return 'Informe o esporte de interesse';
-                      }
-                      return null;
-                    },
+                    value: _esporte,
+                    items: esportesPopulares,
+                    onChanged: (val) => setState(() => _esporte = val),
+                    validator:
+                        (val) =>
+                            val == null
+                                ? 'Selecione o esporte de interesse'
+                                : null,
                   ),
                   const SizedBox(height: 32),
 
@@ -192,16 +201,19 @@ class _CadastroComplementarScreenState extends State<CadastroComplementarScreen>
                         ),
                         elevation: 2,
                       ),
-                      child: _isLoading
-                          ? const CircularProgressIndicator(color: Colors.white)
-                          : const Text(
-                              'Cadastrar',
-                              style: TextStyle(
-                                fontSize: 18,
-                                fontWeight: FontWeight.bold,
+                      child:
+                          _isLoading
+                              ? const CircularProgressIndicator(
                                 color: Colors.white,
+                              )
+                              : const Text(
+                                'Cadastrar',
+                                style: TextStyle(
+                                  fontSize: 18,
+                                  fontWeight: FontWeight.bold,
+                                  color: Colors.white,
+                                ),
                               ),
-                            ),
                     ),
                   ),
                   const SizedBox(height: 16),
@@ -211,7 +223,9 @@ class _CadastroComplementarScreenState extends State<CadastroComplementarScreen>
                       onTap: () {
                         Navigator.pushAndRemoveUntil(
                           context,
-                          MaterialPageRoute(builder: (context) => const LoginScreen()),
+                          MaterialPageRoute(
+                            builder: (context) => const LoginScreen(),
+                          ),
                           (route) => false,
                         );
                       },
@@ -253,9 +267,10 @@ class _CadastroComplementarScreenState extends State<CadastroComplementarScreen>
           ),
           child: DropdownButtonFormField<String>(
             value: value,
-            items: items
-                .map((e) => DropdownMenuItem(value: e, child: Text(e)))
-                .toList(),
+            items:
+                items
+                    .map((e) => DropdownMenuItem(value: e, child: Text(e)))
+                    .toList(),
             onChanged: onChanged,
             icon: const Icon(Icons.arrow_drop_down, color: Colors.black54),
             decoration: const InputDecoration(
@@ -289,35 +304,6 @@ class _CadastroComplementarScreenState extends State<CadastroComplementarScreen>
             controller: controller,
             keyboardType: TextInputType.number,
             inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-            validator: validator,
-            decoration: const InputDecoration(
-              border: InputBorder.none,
-              contentPadding: EdgeInsets.symmetric(horizontal: 18),
-            ),
-            style: const TextStyle(color: Colors.black54),
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildTextField({
-    required String label,
-    required TextEditingController controller,
-    required String? Function(String?)? validator,
-  }) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(label, style: const TextStyle(color: Colors.black, fontSize: 16)),
-        Container(
-          height: 45,
-          decoration: BoxDecoration(
-            color: const Color(0xFFD1F3ED),
-            borderRadius: BorderRadius.circular(12),
-          ),
-          child: TextFormField(
-            controller: controller,
             validator: validator,
             decoration: const InputDecoration(
               border: InputBorder.none,

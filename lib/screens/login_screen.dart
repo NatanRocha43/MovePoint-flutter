@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:flutter_facebook_auth/flutter_facebook_auth.dart';
+import 'package:nome_do_projeto/screens/feed.dart';
 import 'cadastro_basico_screen.dart';
 
 class LoginScreen extends StatefulWidget {
@@ -31,6 +32,13 @@ class _LoginScreenState extends State<LoginScreen> {
     );
   }
 
+  void _navegarParaFeed() {
+    Navigator.push(
+      context,
+      MaterialPageRoute(builder: (context) => FeedPage()),
+    );
+  }
+
   void _fazerLogin() async {
     if (_formKey.currentState!.validate()) {
       try {
@@ -39,6 +47,7 @@ class _LoginScreenState extends State<LoginScreen> {
           password: _senhaController.text.trim(),
         );
         _mostrarDialogo('Sucesso', 'Login realizado com sucesso!');
+        _navegarParaFeed();
       } on FirebaseAuthException catch (e) {
         String mensagemErro = 'Erro ao fazer login.';
         if (e.code == 'user-not-found') {
@@ -56,16 +65,17 @@ class _LoginScreenState extends State<LoginScreen> {
   void _mostrarDialogo(String titulo, String mensagem) {
     showDialog(
       context: context,
-      builder: (BuildContext context) => AlertDialog(
-        title: Text(titulo),
-        content: Text(mensagem),
-        actions: [
-          TextButton(
-            child: const Text("OK"),
-            onPressed: () => Navigator.of(context).pop(),
+      builder:
+          (BuildContext context) => AlertDialog(
+            title: Text(titulo),
+            content: Text(mensagem),
+            actions: [
+              TextButton(
+                child: const Text("OK"),
+                onPressed: () => Navigator.of(context).pop(),
+              ),
+            ],
           ),
-        ],
-      ),
     );
   }
 
@@ -77,7 +87,8 @@ class _LoginScreenState extends State<LoginScreen> {
         final GoogleSignInAccount? googleUser = await GoogleSignIn().signIn();
         if (googleUser == null) return;
 
-        final GoogleSignInAuthentication googleAuth = await googleUser.authentication;
+        final GoogleSignInAuthentication googleAuth =
+            await googleUser.authentication;
         final credential = GoogleAuthProvider.credential(
           accessToken: googleAuth.accessToken,
           idToken: googleAuth.idToken,
@@ -86,6 +97,7 @@ class _LoginScreenState extends State<LoginScreen> {
       }
 
       _mostrarDialogo('Sucesso', 'Login com Google realizado!');
+      _navegarParaFeed();
     } catch (e) {
       _mostrarDialogo('Erro', 'Erro ao fazer login com Google: $e');
     }
@@ -98,16 +110,21 @@ class _LoginScreenState extends State<LoginScreen> {
       } else {
         final LoginResult result = await FacebookAuth.instance.login();
         if (result.status == LoginStatus.success) {
-          final OAuthCredential credential =
-              FacebookAuthProvider.credential(result.accessToken!.token);
+          final OAuthCredential credential = FacebookAuthProvider.credential(
+            result.accessToken!.token,
+          );
           await FirebaseAuth.instance.signInWithCredential(credential);
         } else {
-          _mostrarDialogo('Erro', 'Erro ao fazer login com Facebook: ${result.message}');
+          _mostrarDialogo(
+            'Erro',
+            'Erro ao fazer login com Facebook: ${result.message}',
+          );
           return;
         }
       }
 
       _mostrarDialogo('Sucesso', 'Login com Facebook realizado!');
+      _navegarParaFeed();
     } catch (e) {
       _mostrarDialogo('Erro', 'Erro ao fazer login com Facebook: $e');
     }
@@ -129,10 +146,16 @@ class _LoginScreenState extends State<LoginScreen> {
                 children: [
                   Padding(
                     padding: const EdgeInsets.only(bottom: 12),
-                    child: Image.asset('assets/logo.png', width: 243, height: 78),
+                    child: Image.asset(
+                      'assets/logo.png',
+                      width: 243,
+                      height: 78,
+                    ),
                   ),
-                  const Text('Bem vindo!',
-                      style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold)),
+                  const Text(
+                    'Bem vindo!',
+                    style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
+                  ),
                   const SizedBox(height: 20),
                   _buildTextField(_emailController, 'Email', false),
                   const SizedBox(height: 20),
@@ -156,7 +179,10 @@ class _LoginScreenState extends State<LoginScreen> {
                       Expanded(child: Divider(color: Colors.black54)),
                       Padding(
                         padding: EdgeInsets.symmetric(horizontal: 10),
-                        child: Text('OU', style: TextStyle(color: Colors.black54)),
+                        child: Text(
+                          'OU',
+                          style: TextStyle(color: Colors.black54),
+                        ),
                       ),
                       Expanded(child: Divider(color: Colors.black54)),
                     ],
@@ -187,7 +213,11 @@ class _LoginScreenState extends State<LoginScreen> {
     );
   }
 
-  Widget _buildTextField(TextEditingController controller, String hintText, bool isPassword) {
+  Widget _buildTextField(
+    TextEditingController controller,
+    String hintText,
+    bool isPassword,
+  ) {
     return Container(
       height: 45,
       decoration: BoxDecoration(
@@ -201,7 +231,10 @@ class _LoginScreenState extends State<LoginScreen> {
           border: InputBorder.none,
           hintText: hintText,
           hintStyle: const TextStyle(color: Colors.black54),
-          contentPadding: const EdgeInsets.symmetric(vertical: 15, horizontal: 18),
+          contentPadding: const EdgeInsets.symmetric(
+            vertical: 15,
+            horizontal: 18,
+          ),
         ),
         validator: (value) {
           if (value == null || value.isEmpty) return 'Campo obrigatório';
@@ -222,12 +255,18 @@ class _LoginScreenState extends State<LoginScreen> {
       child: ElevatedButton(
         style: ElevatedButton.styleFrom(
           backgroundColor: const Color(0xFF378274),
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(20),
+          ),
         ),
         onPressed: _fazerLogin,
         child: const Text(
           'Login',
-          style: TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.bold),
+          style: TextStyle(
+            color: Colors.white,
+            fontSize: 20,
+            fontWeight: FontWeight.bold,
+          ),
         ),
       ),
     );
@@ -244,7 +283,10 @@ class _LoginScreenState extends State<LoginScreen> {
       child: Container(
         width: 62,
         height: 62,
-        decoration: BoxDecoration(color: color, borderRadius: BorderRadius.circular(10)),
+        decoration: BoxDecoration(
+          color: color,
+          borderRadius: BorderRadius.circular(10),
+        ),
         child: Icon(icon, color: Colors.white, size: 30),
       ),
     );
