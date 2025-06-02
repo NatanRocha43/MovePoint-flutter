@@ -3,7 +3,6 @@ import 'package:flutter/material.dart';
 import 'package:nome_do_projeto/colors/index.dart';
 import 'package:nome_do_projeto/components/eventCard.dart';
 import 'package:nome_do_projeto/screens/cadastro_evento.dart';
-import 'package:nome_do_projeto/screens/evento.dart';
 import 'package:nome_do_projeto/components/menu.dart';
 
 final diasSemana = [

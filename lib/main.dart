@@ -1,9 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:nome_do_projeto/colors/index.dart';
-import 'package:nome_do_projeto/screens/cadastro_complementar_screen.dart';
-import 'package:nome_do_projeto/screens/cadastro_evento.dart';
-import 'package:nome_do_projeto/screens/feed.dart';
 import './screens/login_screen.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'firebase_options.dart';
@@ -35,7 +32,7 @@ class MyApp extends StatelessWidget {
           elevation: 0,
         ),
       ),
-      home: FeedPage(),
+      home: LoginScreen(),
     );
   }
 }
